@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vasudha Hospital Invoice Maker</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- html2pdf.js for converting HTML to PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e2e8f0; /* Soft gray background */
+        }
+        .container {
+            max-width: 950px;
+        }
+        .invoice-preview {
+            display: none;
+        }
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        #invoice-content, #invoice-content * { 
+            visibility: visible;
+        }
+        #invoice-content {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 800px;
+            height: 100%;
+            padding: 20px;
+            background: white;
+            color: black;
+            margin: auto;
+        }
+
+        /* Avoid page breaks inside tables */
+        table, tr, td, th {
+            page-break-inside: avoid !important;
+        }
+
+        /* Optional: remove background colors (for black-and-white print) */
+        .no-print-bg {
+            background: none !important;
+        }
+    }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+    <div class="container mx-auto p-6 md:p-10 bg-white rounded-xl shadow-2xl">
+
+        <!-- Form Page -->
+        <div id="form-page">
+            <!-- Hospital Info with Logo -->
+            <div class="flex items-center justify-center space-x-4 mb-6">
+                <!-- Placeholder for logo.png -->
+                <img src="/Users/v.pathak/Documents/personal/didi_mm/bill_maker2/logo-no-background.png" alt="Hospital Logo" class="rounded-lg h-20 w-32 md:h-20 md:w-32">
+                <div class="text-center">
+                    <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900">Vasudha Hospital & Multispeciality Center</h1>
+                    <p class="text-md md:text-lg text-gray-600">Baraipur, Chitaipur, Varanasi, UP</p>
+                    <p class="text-sm md:text-md text-gray-500">Mobile: 8707315937, 9807950573</p>
+                </div>
+            </div>
+
+            <hr class="my-6 border-gray-300">
+
+            <!-- Patient and Invoice Details -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div>
+                    <label class="block text-gray-700 font-bold mb-1" for="name">Name:</label>
+                    <input class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" type="text" id="name" placeholder="Shanti Devi">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-1" for="ageSex">Age/Sex:</label>
+                    <input class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" type="text" id="ageSex" placeholder="45/F">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-1" for="invoiceNo">Invoice No:</label>
+                    <input class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" type="text" id="invoiceNo" placeholder="135">
+                </div>
+                <div class="lg:col-span-2">
+                    <label class="block text-gray-700 font-bold mb-1" for="address">Address:</label>
+                    <input class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" type="text" id="address" placeholder="Bhabhua, Bihar">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-1" for="dateOfAdmission">Date of Admission:</label>
+                    <input class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" type="date" id="dateOfAdmission" placeholder="2025-08-01">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-1" for="ward">Ward:</label>
+                    <input class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" type="text" id="ward" placeholder="ICU">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-1" for="bedNo">Bed No:</label>
+                    <input class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" type="text" id="bedNo" placeholder="3">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-1" for="dateOfDischarge">Date of Discharge:</label>
+                    <input class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" type="date" id="dateOfDischarge" placeholder="2025-08-05">
+                </div>
+            </div>
+
+            <hr class="my-6 border-gray-300">
+
+            <!-- Itemized Billing Table -->
+            <h3 class="text-xl font-bold mb-4 text-gray-700">Billing Details</h3>
+            <div class="overflow-x-auto rounded-lg shadow-inner">
+                <table class="w-full text-left table-auto border-collapse">
+                    <thead>
+                        <tr class="bg-blue-100 border-b-2 border-blue-200 text-gray-700">
+                            <th class="p-3 font-semibold border-r border-blue-200 w-12">S.No.</th>
+                            <th class="p-3 font-semibold border-r border-blue-200">Description</th>
+                            <th class="p-3 font-semibold border-r border-blue-200 w-24">Rate</th>
+                            <th class="p-3 font-semibold border-r border-blue-200 w-24">Quantity</th>
+                            <th class="p-3 font-semibold w-24">Amount (Rs.)</th>
+                            <th class="p-3 w-12"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoice-items-body" class="divide-y divide-gray-200">
+                        <!-- Initial rows from the example -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-6 flex justify-between items-center">
+                <button id="add-item-btn" class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md">
+                    + Add Item
+                </button>
+                <div class="text-right">
+                    <p class="font-bold text-xl text-gray-700">Total: <span id="total-amount" class="text-blue-600">0</span></p>
+                </div>
+            </div>
+
+            <div class="mt-8">
+                <label class="block text-gray-700 font-bold mb-1" for="advance-amount">Advance Amount (Rs.):</label>
+                <input class="w-full md:w-1/2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" type="number" id="advance-amount" value="0">
+            </div>
+
+            <div class="mt-10 flex justify-center">
+                <button id="generate-invoice-btn" class="bg-emerald-600 text-white text-xl font-extrabold px-10 py-4 rounded-xl hover:bg-emerald-700 transition duration-300 focus:outline-none focus:ring-4 focus:ring-emerald-400 shadow-xl">
+                    Generate Invoice
+                </button>
+            </div>
+        </div>
+
+        <!-- Invoice Preview Page -->
+        <div id="invoice-preview" class="invoice-preview">
+            <!-- <div id="invoice-content" class="p-0 bg-transparent border-none shadow-none"> -->
+            <div id="invoice-content" class="p-6 bg-white border border-gray-300 rounded-lg shadow-md">
+                <!-- Invoice content will be dynamically generated here -->
+            </div>
+            <div class="mt-6 flex justify-center space-x-4">
+                <button id="edit-invoice-btn" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition duration-300 focus:outline-none focus:ring-2 focus:ring-gray-400 shadow-md">
+                    Edit Invoice
+                </button>
+                <button id="download-pdf-btn" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-red-400 shadow-md" onclick="window.print()">
+                    Download as PDF
+                </button>
+            </div>
+        </div>
+    </div>
+    <datalist id="description-options">
+        <option value="Admission Charge">
+        <option value="Emergency Charge">
+        <option value="Room Rent - I.C.U./C.C.U.">
+        <option value="Nursing Charge">
+        <option value="Doctors Charge">
+        <option value="Consultant Doctors">
+        <option value="Oxygen Charge">
+        <option value="Monitor Charge">
+        <option value="Nebulization Charge">
+        <option value="Infusion Pump Charge">
+        <option value="Path. Lab Charges -1">
+        <option value="Path. Lab Charges -2">
+        <option value="Miscellaneous">
+    </datalist>
+
+    <script>
+        // Data for the initial invoice items from the example
+        const initialItems = [
+            { desc: 'Admission Charge', rate: 1000, qty: 1, amount: 1000 },
+            { desc: 'Emergency Charge', rate: 3500, qty: 1, amount: 3500 },
+            { desc: 'Room Rent - I.C.U./C.C.U.', rate: 3000, qty: 5, amount: 15000 },
+            { desc: 'Nursing Charge', rate: 750, qty: 5, amount: 3750 },
+            { desc: 'Doctors Charge', rate: 1000, qty: 5, amount: 5000 },
+            { desc: 'Consultant Doctors', rate: 1500, qty: 3, amount: 4500 },
+            { desc: 'Oxygen Charge', rate: 200, qty: 82, amount: 16400 },
+            { desc: 'Monitor Charge', rate: 500, qty: 5, amount: 2500 },
+            { desc: 'Nebulization Charge', rate: 200, qty: 25, amount: 5000 },
+            { desc: 'Infusion Pump Charge', rate: 100, qty: 11, amount: 1100 },
+            { desc: 'Path. Lab Charges -1', rate: 4600, qty: 1, amount: 4600 },
+            { desc: 'Path. Lab Charges -2', rate: 4200, qty: 1, amount: 4200 },
+            { desc: 'Miscellaneous', rate: 250, qty: 1, amount: 250 },
+        ];
+
+        // Function to create a new row for the invoice items table
+        function createInvoiceItemRow(item, index) {
+            const tr = document.createElement('tr');
+            tr.className = 'border-b border-gray-200 hover:bg-gray-50 transition duration-150';
+            const descriptionValue = item.desc_i ? ` - ${item.desc_i}` : item.desc || '';
+            const descriptionDisplay = item.desc_i ? item.desc_i : item.desc || '';
+
+            tr.innerHTML = `
+                <td class="p-3 border-r border-gray-300 w-12 text-center">${index + 1}</td>
+                <td class="p-3 border-r border-gray-300">
+                    <input type="text" list="description-options" class="w-full bg-transparent border-none focus:outline-none" value="${descriptionDisplay}">
+                </td>
+                <td class="p-3 border-r border-gray-300">
+                    <input type="number" class="w-full bg-transparent border-none text-right focus:outline-none item-rate" value="${item.rate || 0}">
+                </td>
+                <td class="p-3 border-r border-gray-300">
+                    <input type="number" class="w-full bg-transparent border-none text-center focus:outline-none item-qty" value="${item.qty || 0}">
+                </td>
+                <td class="p-3 text-right">
+                    <span class="item-amount">${(item.amount || 0).toLocaleString('en-IN')}</span>
+                </td>
+                <td class="p-3 text-center">
+                    <button class="remove-item-btn text-red-500 hover:text-red-700 transition duration-150 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </td>
+            `;
+            return tr;
+        }
+
+        // Function to render the initial invoice items
+        function renderInitialItems() {
+            const body = document.getElementById('invoice-items-body');
+            body.innerHTML = ''; // Clear existing items
+            initialItems.forEach((item, index) => {
+                const row = createInvoiceItemRow(item, index);
+                body.appendChild(row);
+            });
+            updateTotal();
+        }
+
+        // Function to calculate the total amount
+        function updateTotal() {
+            let total = 0;
+            const rows = document.querySelectorAll('#invoice-items-body tr');
+            rows.forEach(row => {
+                const rate = parseFloat(row.querySelector('.item-rate').value) || 0;
+                const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+                const amount = rate * qty;
+                row.querySelector('.item-amount').textContent = amount.toLocaleString('en-IN');
+                total += amount;
+            });
+            document.getElementById('total-amount').textContent = total.toLocaleString('en-IN');
+        }
+
+        // Function to convert a number to Indian words
+        function numberToWordsIndian(num) {
+            if (num === 0) return 'Zero Only';
+            const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+            const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+            const g = ['', 'Thousand', 'Lakh', 'Crore'];
+
+            const getTens = (n) => {
+                if (n < 20) return a[n];
+                return b[Math.floor(n / 10)] + ' ' + a[n % 10];
+            };
+
+            const convertGroup = (n) => {
+                const h = Math.floor(n / 100);
+                const t = n % 100;
+                let str = '';
+                if (h > 0) str += a[h] + 'Hundred ';
+                if (t > 0) str += getTens(t);
+                return str;
+            };
+
+            let numStr = num.toString().split('.')[0];
+            let result = '';
+            let groupIndex = 0;
+
+            while (numStr.length > 0) {
+                let group;
+                if (numStr.length <= 2) {
+                    group = parseInt(numStr, 10);
+                    numStr = '';
+                } else if (numStr.length === 3) {
+                    group = parseInt(numStr, 10);
+                    numStr = '';
+                } else {
+                    group = parseInt(numStr.substring(numStr.length - 2), 10);
+                    numStr = numStr.substring(0, numStr.length - 2);
+                }
+
+                if (group > 0) {
+                    result = convertGroup(group) + g[groupIndex] + ' ' + result;
+                }
+                groupIndex++;
+                if (groupIndex > 3) break; // To handle very large numbers
+            }
+            return result.trim() + ' Only';
+        }
+
+
+        // Function to generate and show the invoice preview
+        function generateInvoice() {
+            const formPage = document.getElementById('form-page');
+            const invoicePreview = document.getElementById('invoice-preview');
+            const invoiceContent = document.getElementById('invoice-content');
+
+            // Collect data from the form
+            const name = document.getElementById('name').value;
+            const ageSex = document.getElementById('ageSex').value;
+            let invoiceNo = document.getElementById('invoiceNo').value;
+            if (!invoiceNo) {
+                invoiceNo = '#' + Math.floor(Math.random() * 9000) + 1000;
+            }
+            const address = document.getElementById('address').value;
+            const dateOfDischarge = document.getElementById('dateOfDischarge').value;
+            const ward = document.getElementById('ward').value;
+            const bedNo = document.getElementById('bedNo').value;
+            const dateOfAdmission = document.getElementById('dateOfAdmission').value;
+            const advanceAmount = parseFloat(document.getElementById('advance-amount').value) || 0;
+            const total = parseFloat(document.getElementById('total-amount').textContent.replace(/,/g, '')) || 0;
+            const balance = total - advanceAmount;
+            const totalInWords = numberToWordsIndian(total);
+
+            let itemsHtml = '';
+            const rows = document.querySelectorAll('#invoice-items-body tr');
+            rows.forEach((row, index) => {
+                const desc = row.querySelector('input[type="text"]').value;
+                const rate = row.querySelector('.item-rate').value;
+                const qty = row.querySelector('.item-qty').value;
+                const amount = row.querySelector('.item-amount').textContent;
+
+                itemsHtml += `
+                    <tr>
+                        <td class="py-2 px-3 border-r border-gray-300 w-12">${index + 1}</td>
+                        <td class="py-2 px-3 border-r border-gray-300">${desc}</td>
+                        <td class="py-2 px-3 border-r border-gray-300 text-right">${rate}</td>
+                        <td class="py-2 px-3 border-r border-gray-300 text-center">${qty}</td>
+                        <td class="py-2 px-3 text-right">${amount}</td>
+                    </tr>
+                `;
+            });
+
+            // Generate the full HTML for the invoice
+            invoiceContent.innerHTML = `
+                <div class="text-center mb-6 flex items-center justify-center space-x-4">
+                    <!-- Placeholder for logo in preview -->
+                    <img src="/Users/v.pathak/Documents/personal/didi_mm/bill_maker2/logo-no-background.png" alt="Hospital Logo" class="rounded-lg h-20 w-32">
+                    <div>
+                        <h2 class="text-2xl font-bold">Vasudha Hospital & Multispeciality Center</h2>
+                        <p class="text-s text-600">Baraipur, Chitaipur, Varanasi, UP</p>
+                        <p class="text-s text-600">Mobile: 8707315937, 9807950573</p>
+                    </div>
+                </div>
+                <h1 class="text-xl font-bold text-center border-y-2 border-gray-400 py-2 mb-4">INVOICE</h1>
+
+                <div class="grid grid-cols-2 gap-x-8 gap-y-2 text-sm mb-4">
+                    <p><strong>Name (Age/Sex):</strong> ${name} (${ageSex})</p>
+                    <p><strong>Invoice No:</strong> ${invoiceNo}</p>
+                    <p><strong>Address:</strong> ${address}</p>
+                    <p><strong>Date of Admission:</strong> ${dateOfAdmission}</p>
+                    <p><strong>Ward:</strong> ${ward} (Bed No. ${bedNo})</p>
+                    <p><strong>Date of Discharge:</strong> ${dateOfDischarge}</p>
+                    
+                </div>
+
+                <table class="w-full text-left text-sm border border-gray-300 table-auto border-collapse mb-4">
+                    <thead>
+                        <tr class="bg-gray-100 border-b border-gray-300">
+                            <th class="py-2 px-3 border-r border-gray-300 w-12 text-center">S.No.</th>
+                            <th class="py-2 px-3 border-r border-gray-300">Description</th>
+                            <th class="py-2 px-3 border-r border-gray-300 w-24 text-center">Rate</th>
+                            <th class="py-2 px-3 border-r border-gray-300 w-24 text-center">Quantity<br>(Days/Hours/No)</th>
+                            <th class="py-2 px-3 w-24 text-center">Amount (Rs.)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemsHtml}
+                    </tbody>
+                </table>
+
+                <div class="flex justify-between items-end text-sm mb-4 mt-6">
+                    <div class="w-2/3">
+                        <p class="font-bold">Amount in Words:</p>
+                        <p class="italic"> ${totalInWords}</p>
+                    </div>
+                    <div class="w-1/3 text-right">
+                        <p><strong>Total:</strong> ${total.toLocaleString('en-IN')}</p>
+                        <p class="border-t border-gray-300 mt-2 pt-2"><strong>Less (Advance):</strong> ${advanceAmount.toLocaleString('en-IN')}</p>
+                        <p class="border-y border-gray-400 font-extrabold text-lg my-2 py-1"><strong>Balance:</strong> ${balance.toLocaleString('en-IN')}</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-between mt-8 text-sm">
+                    <div class="text-left w-1/2">
+                        <p>For: Vasudha Hospital</p>
+                    </div>
+                    <div class="text-right w-1/2">
+                        <div class="h-16 w-full border-b border-gray-400 mb-2"></div>
+                        <p>Authorised Signatory</p>
+                    </div>
+                </div>
+            `;
+
+            // Hide form and show preview
+            formPage.style.display = 'none';
+            invoicePreview.style.display = 'block';
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            renderInitialItems();
+
+            // Event listener for adding a new item
+            document.getElementById('add-item-btn').addEventListener('click', () => {
+                const body = document.getElementById('invoice-items-body');
+                const newIndex = body.children.length;
+                const newRow = createInvoiceItemRow({ desc: '', rate: 0, qty: 0, amount: 0 }, newIndex);
+                body.appendChild(newRow);
+                updateTotal();
+            });
+
+            // Event delegation for item-specific actions (rate/qty change, remove button)
+            document.getElementById('invoice-items-body').addEventListener('input', (e) => {
+                if (e.target.classList.contains('item-rate') || e.target.classList.contains('item-qty')) {
+                    updateTotal();
+                }
+            });
+
+            document.getElementById('invoice-items-body').addEventListener('click', (e) => {
+                if (e.target.closest('.remove-item-btn')) {
+                    e.target.closest('tr').remove();
+                    updateTotal();
+                    // Re-number the remaining items
+                    const rows = document.querySelectorAll('#invoice-items-body tr');
+                    rows.forEach((row, index) => {
+                        row.querySelector('td').textContent = index + 1;
+                    });
+                }
+            });
+
+            // Event listener for generating the invoice
+            document.getElementById('generate-invoice-btn').addEventListener('click', generateInvoice);
+
+            
+            // Event listener for the edit invoice button
+            document.getElementById('edit-invoice-btn').addEventListener('click', () => {
+                document.getElementById('form-page').style.display = 'block';
+                document.getElementById('invoice-preview').style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>
