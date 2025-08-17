@@ -258,21 +258,30 @@
         // Function to convert a number to Indian words
         function numberToWordsIndian(num) {
             if (num === 0) return 'Zero Only';
-            const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
-            const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-            const g = ['', 'Thousand', 'Lakh', 'Crore'];
+
+            const a = [
+                '', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ',
+                'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ',
+                'Seventeen ', 'Eighteen ', 'Nineteen '
+            ];
+            const b = ['', '', 'Twenty ', 'Thirty ', 'Forty ', 'Fifty ', 'Sixty ', 'Seventy ', 'Eighty ', 'Ninety '];
+            const g = ['', 'Thousand ', 'Lakh ', 'Crore '];
 
             const getTens = (n) => {
                 if (n < 20) return a[n];
-                return b[Math.floor(n / 10)] + ' ' + a[n % 10];
+                return b[Math.floor(n / 10)] + a[n % 10];
             };
 
             const convertGroup = (n) => {
-                const h = Math.floor(n / 100);
-                const t = n % 100;
                 let str = '';
-                if (h > 0) str += a[h] + 'Hundred ';
-                if (t > 0) str += getTens(t);
+                if (n > 99) {
+                    str += a[Math.floor(n / 100)] + 'Hundred ';
+                    n = n % 100;
+                }
+                if (n > 0) {
+                    if (str !== '') str += 'and ';
+                    str += getTens(n);
+                }
                 return str;
             };
 
@@ -282,23 +291,20 @@
 
             while (numStr.length > 0) {
                 let group;
-                if (numStr.length <= 2) {
-                    group = parseInt(numStr, 10);
-                    numStr = '';
-                } else if (numStr.length === 3) {
-                    group = parseInt(numStr, 10);
-                    numStr = '';
-                } else {
-                    group = parseInt(numStr.substring(numStr.length - 2), 10);
-                    numStr = numStr.substring(0, numStr.length - 2);
+                if (groupIndex === 0) { // first group: last 3 digits
+                    group = parseInt(numStr.slice(-3), 10);
+                    numStr = numStr.slice(0, -3);
+                } else { // after that: 2 digits
+                    group = parseInt(numStr.slice(-2), 10);
+                    numStr = numStr.slice(0, -2);
                 }
 
                 if (group > 0) {
-                    result = convertGroup(group) + g[groupIndex] + ' ' + result;
+                    result = convertGroup(group) + g[groupIndex] + result;
                 }
                 groupIndex++;
-                if (groupIndex > 3) break; // To handle very large numbers
             }
+
             return result.trim() + ' Only';
         }
 
